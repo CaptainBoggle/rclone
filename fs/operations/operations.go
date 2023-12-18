@@ -31,6 +31,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/atexit"
@@ -954,7 +955,26 @@ func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
 		return nil
 	}
 	fs.Infof(fs.LogDirName(f, dir), "Removing directory")
-	return f.Rmdir(ctx, dir)
+	err := f.Rmdir(ctx, dir)
+	ci := fs.GetConfig(ctx)
+	if len(ci.NoBlockRmdir) == 0 || err == nil {
+		return err
+	}
+	entries, err := list.DirSorted(ctx, f, true, dir) // includeAll to ignore filters here
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		obj, ok := entry.(fs.Object)
+		if ok {
+			basename := path.Base(obj.Remote())
+			if !Contains(ci.NoBlockRmdir, basename) {
+				return fmt.Errorf("%s: Cannot remove directory due to un-ignorable file: %s", dir, basename)
+			}
+		}
+	}
+	// directory contains nothing but deletable files
+	return Purge(ctx, f, dir)
 }
 
 // Rmdir removes a container but not if not empty
@@ -1271,6 +1291,10 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 					dirEmpty[dir] = true
 				}
 			case fs.Object:
+				if len(ci.NoBlockRmdir) > 0 && Contains(ci.NoBlockRmdir, path.Base(x.Remote())) {
+					fs.Debugf(x.Remote(), "found in --no-block-rmdir list, ignoring")
+					continue
+				}
 				// mark the parents of the file as being non-empty
 				dir := x.Remote()
 				for dir != "" {
@@ -2254,4 +2278,23 @@ func SkipDestructive(ctx context.Context, subject interface{}, action string) (s
 		}
 	}
 	return skip
+}
+
+// two functions copied from https://pkg.go.dev/slices
+// (doing it this way to maintain compatibility with go1.19...)
+
+// Index returns the index of the first occurrence of v in s,
+// or -1 if not present.
+func Index[S ~[]E, E comparable](s S, v E) int {
+	for i := range s {
+		if v == s[i] {
+			return i
+		}
+	}
+	return -1
+}
+
+// Contains reports whether v is present in s.
+func Contains[S ~[]E, E comparable](s S, v E) bool {
+	return Index(s, v) >= 0
 }
