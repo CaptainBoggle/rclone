@@ -5,10 +5,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/unicode/norm"
 )
 
 func TestCaseSensitivity(t *testing.T) {
@@ -86,6 +88,8 @@ func TestCaseSensitivity(t *testing.T) {
 	assert.NotEqual(t, err, ENOENT)
 
 	// Run the same set of checks with case-Sensitive VFS, for comparison.
+	ci := fs.GetConfig(ctx)
+	ci.IgnoreCaseSync = false // restore the default changed by previous test
 	assertFileDataVFS(t, vfsCS, "FiLeA", "data1")
 
 	assertFileAbsentVFS(t, vfsCS, "fileA")
@@ -159,4 +163,35 @@ func assertFileAbsentVFS(t *testing.T, vfs *VFS, name string) {
 	assert.Nil(t, fd)
 	assert.Error(t, err)
 	assert.Equal(t, err, ENOENT)
+}
+
+func TestUnicodeNormalization(t *testing.T) {
+	r := fstest.NewRun(t)
+
+	var (
+		nfc  = norm.NFC.String(norm.NFD.String("測試_Русский___ě_áñ"))
+		nfd  = norm.NFD.String(nfc)
+		both = "normal name with no special characters.txt"
+	)
+
+	// Create test files
+	ctx := context.Background()
+	file1 := r.WriteObject(ctx, both, "data1", t1)
+	file2 := r.WriteObject(ctx, nfc, "data2", t2)
+	r.CheckRemoteItems(t, file1, file2)
+
+	// Create VFS
+	opt := vfscommon.DefaultOpt
+	vfs := New(r.Fremote, &opt)
+	defer cleanupVFS(t, vfs)
+
+	// assert that both files are found under NFD-normalized names
+	assertFileDataVFS(t, vfs, norm.NFD.String(both), "data1")
+	assertFileDataVFS(t, vfs, nfd, "data2")
+
+	// change ci.NoUnicodeNormalization to true and verify that only file1 is found
+	ci := fs.GetConfig(ctx)
+	ci.NoUnicodeNormalization = true
+	assertFileDataVFS(t, vfs, norm.NFD.String(both), "data1")
+	assertFileAbsentVFS(t, vfs, nfd)
 }

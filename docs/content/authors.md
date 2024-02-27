@@ -57,7 +57,7 @@ put them back in again.` >}}
   * Scott McGillivray <scott.mcgillivray@gmail.com>
   * Bjørn Erik Pedersen <bjorn.erik.pedersen@gmail.com>
   * Lukas Loesche <lukas@mesosphere.io>
-  * emyarod <allllaboutyou@gmail.com>
+  * emyarod <emyarod@users.noreply.github.com>
   * T.C. Ferguson <tcf909@gmail.com>
   * Brandur <brandur@mutelight.org>
   * Dario Giovannetti <dev@dariogiovannetti.net>
@@ -805,3 +805,17 @@ put them back in again.` >}}
   * Alen Šiljak <dev@alensiljak.eu.org>
   * 你知道未来吗 <rkonfj@gmail.com>
   * Abhinav Dhiman <8640877+ahnv@users.noreply.github.com>
+  * halms <7513146+halms@users.noreply.github.com>
+  * ben-ba <benjamin.brauner@gmx.de>
+  * Eli Orzitzer <e_orz@yahoo.com>
+  * Anthony Metzidis <anthony.metzidis@gmail.com>
+  * emyarod <afw5059@gmail.com>
+  * keongalvin <keongalvin@gmail.com>
+  * rarspace01 <rarspace01@users.noreply.github.com>
+  * Paul Stern <paulstern45@gmail.com>
+  * Nikhil Ahuja <nikhilahuja@live.com>
+  * Harshit Budhraja <52413945+harshit-budhraja@users.noreply.github.com>
+  * Tera <24725862+teraa@users.noreply.github.com>
+  * Kyle Reynolds <kylereynoldsdev@gmail.com>
+  * Michael Eischer <michael.eischer@gmx.de>
+  * Thomas Müller <1005065+DeepDiver1975@users.noreply.github.com>

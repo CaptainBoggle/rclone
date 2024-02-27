@@ -30,7 +30,6 @@ See the following for detailed instructions for
   * [1Fichier](/fichier/)
   * [Akamai Netstorage](/netstorage/)
   * [Alias](/alias/)
-  * [Amazon Drive](/amazonclouddrive/)
   * [Amazon S3](/s3/)
   * [Backblaze B2](/b2/)
   * [Box](/box/)
@@ -1108,6 +1107,26 @@ triggering follow-on actions if data was copied, or skipping if not.
 NB: Enabling this option turns a usually non-fatal error into a potentially
 fatal one - please check and adjust your scripts accordingly!
 
+### --fix-case ###
+
+Normally, a sync to a case insensitive dest (such as macOS / Windows) will
+not result in a matching filename if the source and dest filenames have
+casing differences but are otherwise identical. For example, syncing `hello.txt`
+to `HELLO.txt` will normally result in the dest filename remaining `HELLO.txt`.
+If `--fix-case` is set, then `HELLO.txt` will be renamed to `hello.txt`
+to match the source.
+
+NB:
+- directory names with incorrect casing will also be fixed
+- `--fix-case` will be ignored if `--immutable` is set
+- using `--local-case-sensitive` instead is not advisable;
+it will cause `HELLO.txt` to get deleted!
+- the old dest filename must not be excluded by filters.
+Be especially careful with [`--files-from`](/filtering/#files-from-read-list-of-source-file-names),
+which does not respect [`--ignore-case`](/filtering/#ignore-case-make-searches-case-insensitive)!
+- on remotes that do not support server-side move, `--fix-case` will require
+downloading the file and re-uploading it. To avoid this, do not use `--fix-case`.
+
 ### --fs-cache-expire-duration=TIME
 
 When using rclone via the API rclone caches created remotes for 5
@@ -1614,7 +1633,7 @@ json.dump(o, sys.stdout, indent="\t")
 ```
 
 You can find this example (slightly expanded) in the rclone source code at
-[bin/test_metadata_mapper.py](https://github.com/rclone/rclone/blob/master/test_metadata_mapper.py).
+[bin/test_metadata_mapper.py](https://github.com/rclone/rclone/blob/master/bin/test_metadata_mapper.py).
 
 If you want to see the input to the metadata mapper and the output
 returned from it in the log you can use `-vv --dump mapper`.
@@ -1674,7 +1693,7 @@ use multiple threads to transfer the file (default 256M).
 
 Capable backends are marked in the
 [overview](/overview/#optional-features) as `MultithreadUpload`. (They
-need to implement either the `OpenWriterAt` or `OpenChunkedWriter`
+need to implement either the `OpenWriterAt` or `OpenChunkWriter`
 internal interfaces). These include include, `local`, `s3`,
 `azureblob`, `b2`, `oracleobjectstorage` and `smb` at the time of
 writing.
